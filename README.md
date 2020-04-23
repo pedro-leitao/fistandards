@@ -13,3 +13,5 @@ And you then verify a string:
 ```go
 countryCode, cleanedIban, matches := ibanChecker.Validate("AT-123456789012345678", true)
 ```
+
+See `main.go` and the tester packages for more examples.
