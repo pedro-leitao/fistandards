@@ -1,17 +1,18 @@
 # fistandards
-fistandards is a set of methods to validate a number of banking and financial coding standards
+fistandards is an implementation of a number of banking standards.
 
-To use you initialize a Checker:
+Here's some example code:
 
 ```go
-var ibanChecker iban.Checker
-if err := ibanChecker.Initialize(); err != nil {
-log.Fatal("something went wrong: ", err.Error())
-```
+var iban iban.Iban
+var normalized string
+var ok bool
 
-And you then verify a string:
-```go
-countryCode, cleanedIban, matches := ibanChecker.Validate("AT-123456789012345678", true)
+if normalized, ok = iban.Set("GB82-WEST 1234 5698 7654 32"); !ok {
+	fmt.Printf("%v is not a valid IBAN\n", normalized)
+} else {
+	fmt.Printf("%v is a valid IBAN\n", normalized)
+}
 ```
 
 See `main.go` and the tester packages for more examples.
