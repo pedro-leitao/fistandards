@@ -16,6 +16,7 @@ func main() {
 		fmt.Printf("%v: $v\n", normalized, err.Error())
 	} else {
 		fmt.Printf("%v is a valid IBAN\n", normalized)
+		fmt.Printf("%v\n", iban)
 	}
 
 }

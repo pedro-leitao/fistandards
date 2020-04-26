@@ -1,5 +1,5 @@
 // Package iban is a set of methods to validate and process IBAN representations.
-// Original regular expressions taken from http://ht5ifv.serprest.pt/extensions/tools/IBAN/
+// See https://www.mobilefish.com/services/bban_iban/bban_iban.php for structure details.
 package iban
 
 import (
@@ -21,11 +21,14 @@ var countryLengths = map[string]int{
 
 // Iban is the representation of an IBAN value
 type Iban struct {
-	iban string
+	iban            string
+	countryCode     string
+	ibanCheckDigits string
+	bban            string
 }
 
 // Set the object to a given IBAN string, and check its validity returning a normalized
-// representation and true or false depending on whether it is a valid IBAN
+// representation and an error in case verification failed.
 func (c *Iban) Set(s string) (string, error) {
 
 	if len(s) < 2 {
@@ -79,6 +82,10 @@ func (c *Iban) Set(s string) (string, error) {
 	if modulus.Int64() != 1 {
 		return clean, errors.New("Invalid modulus")
 	}
+
+	c.countryCode = clean[0:2]
+	c.ibanCheckDigits = clean[2:4]
+	c.bban = clean[4:]
 
 	return clean, nil
 
