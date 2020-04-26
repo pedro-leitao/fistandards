@@ -3,143 +3,68 @@
 package iban
 
 import (
-	"regexp"
+	"math/big"
+	"strconv"
 	"strings"
 )
 
-// Checker is the representation of an IBAN validator
-type Checker struct {
-	regex             map[string]string
-	compiledRegex     map[string]*regexp.Regexp
-	compiledRegexNoCC map[string]*regexp.Regexp
+// Iban is the representation of an IBAN value
+type Iban struct {
+	countryLengths map[string]int
+	iban           string
 }
 
-// Initialize creates a new IBAN validator
-func (c *Checker) Initialize() error {
-	c.regex = make(map[string]string)
-	c.compiledRegex = make(map[string]*regexp.Regexp)
-	c.compiledRegexNoCC = make(map[string]*regexp.Regexp)
+// Set the object to a given IBAN string, and check its validity returning a normalized
+// representation and true or false depending on whether it is a valid IBAN
+func (c *Iban) Set(s string) (string, bool) {
 
-	c.regex["AL"] = `^AL\d{10}[0-9A-Z]{16}$`
-	c.regex["AD"] = `^AD\d{10}[0-9A-Z]{12}$`
-	c.regex["AT"] = `^AT\d{18}$`
-	c.regex["BH"] = `^BH\d{2}[A-Z]{4}[0-9A-Z]{14}`
-	c.regex["BE"] = `^BE\d{14}$`
-	c.regex["BA"] = `^BA\d{18}$`
-	c.regex["BG"] = `^BG\d{2}[A-Z]{4}\d{6}[0-9A-Z]{8}$`
-	c.regex["HR"] = `^HR\d{19}$`
-	c.regex["CY"] = `^CY\d{10}[0-9A-Z]{16}$`
-	c.regex["CZ"] = `^CZ\d{22}$`
-	c.regex["DK"] = `^DK\d{16}$|^FO\d{16}$|^GL\d{16}$`
-	c.regex["DO"] = `^DO\d{2}[0-9A-Z]{4}\d{20}$`
-	c.regex["EE"] = `^EE\d{18}$`
-	c.regex["FI"] = `^FI\d{16}$`
-	c.regex["FR"] = `^FR\d{12}[0-9A-Z]{11}\d{2}$`
-	c.regex["GE"] = `^GE\d{2}[A-Z]{2}\d{16}$`
-	c.regex["DE"] = `^DE\d{20}$`
-	c.regex["GI"] = `^GI\d{2}[A-Z]{4}[0-9A-Z]{15}$`
-	c.regex["GR"] = `^GR\d{9}[0-9A-Z]{16}$`
-	c.regex["HU"] = `^HU\d{26}$`
-	c.regex["IS"] = `^IS\d{24}$`
-	c.regex["IE"] = `^IE\d{2}[A-Z]{4}\d{14}$`
-	c.regex["IL"] = `^IL\d{21}$`
-	c.regex["IT"] = `^IT\d{2}[A-Z]\d{10}[0-9A-Z]{12}$`
-	//c.regex["KZ"] = `^[A-Z]{2}\d{5}[0-9A-Z]{13}$`
-	c.regex["KW"] = `^KW\d{2}[A-Z]{4}22!$`
-	c.regex["LV"] = `^LV\d{2}[A-Z]{4}[0-9A-Z]{13}$`
-	c.regex["LB"] = `^LB\d{6}[0-9A-Z]{20}$`
-	c.regex["LI"] = `^LI\d{7}[0-9A-Z]{12}$`
-	c.regex["LT"] = `^LT\d{18}$`
-	c.regex["LU"] = `^LU\d{5}[0-9A-Z]{13}$`
-	c.regex["MK"] = `^MK\d{5}[0-9A-Z]{10}\d{2}$`
-	c.regex["MT"] = `^MT\d{2}[A-Z]{4}\d{5}[0-9A-Z]{18}$`
-	c.regex["MR"] = `^MR13\d{23}$`
-	c.regex["MU"] = `^MU\d{2}[A-Z]{4}\d{19}[A-Z]{3}$`
-	c.regex["MC"] = `^MC\d{12}[0-9A-Z]{11}\d{2}$`
-	c.regex["ME"] = `^ME\d{20}$`
-	c.regex["NL"] = `^NL\d{2}[A-Z]{4}\d{10}$`
-	c.regex["NO"] = `^NO\d{13}$`
-	c.regex["PL"] = `^PL\d{10}[0-9A-Z]{,16}n$`
-	c.regex["PT"] = `^PT\d{23}$`
-	c.regex["RO"] = `^RO\d{2}[A-Z]{4}[0-9A-Z]{16}$`
-	c.regex["SM"] = `^SM\d{2}[A-Z]\d{10}[0-9A-Z]{12}$`
-	c.regex["SA"] = `^SA\d{4}[0-9A-Z]{18}$`
-	c.regex["RS"] = `^RS\d{20}$`
-	c.regex["SK"] = `^SK\d{22}$`
-	c.regex["SI"] = `^SI\d{17}$`
-	c.regex["ES"] = `^ES\d{22}$`
-	c.regex["SE"] = `^SE\d{22}$`
-	c.regex["CH"] = `^CH\d{7}[0-9A-Z]{12}$`
-	c.regex["TN"] = `^TN59\d{20}$`
-	c.regex["TR"] = `^TR\d{7}[0-9A-Z]{17}$`
-	c.regex["AE"] = `^AE\d{21}$`
-	c.regex["GB"] = `^GB\d{2}[A-Z]{4}\d{14}$`
+	c.countryLengths = map[string]int{
+		"AD": 24, "AE": 23, "AT": 20, "AZ": 28, "BA": 20, "BE": 16, "BG": 22, "BH": 22, "BR": 29,
+		"CH": 21, "CR": 21, "CY": 28, "CZ": 24, "DE": 22, "DK": 18, "DO": 28, "EE": 20, "ES": 24,
+		"FI": 18, "FO": 18, "FR": 27, "GB": 22, "GI": 23, "GL": 18, "GR": 27, "GT": 28, "HR": 21,
+		"HU": 28, "IE": 22, "IL": 23, "IS": 26, "IT": 27, "JO": 30, "KW": 30, "KZ": 20, "LB": 28,
+		"LI": 21, "LT": 20, "LU": 20, "LV": 21, "MC": 27, "MD": 24, "ME": 22, "MK": 19, "MR": 27,
+		"MT": 31, "MU": 30, "NL": 18, "NO": 15, "PK": 24, "PL": 28, "PS": 29, "PT": 25, "QA": 29,
+		"RO": 24, "RS": 22, "SA": 24, "SE": 24, "SI": 19, "SK": 24, "SM": 27, "TN": 24, "TR": 26,
+	}
 
-	for k, v := range c.regex {
-		var err error
-		if c.compiledRegex[k], err = regexp.Compile(v); err != nil {
-			return err
+	clean := strings.TrimSpace(s)
+	clean = strings.ReplaceAll(clean, ".", "")
+	clean = strings.ReplaceAll(clean, "-", "")
+	clean = strings.ReplaceAll(clean, " ", "")
+	clean = strings.ReplaceAll(clean, "\t", "")
+	clean = strings.ToUpper(clean)
+
+	adjusted := clean[4:] + clean[:4]
+	ns := ""
+	for _, char := range adjusted {
+		// A-Z
+		if int(char) >= 65 && int(char) <= 90 {
+			ns = ns + strconv.Itoa(int(char)-55)
+			continue
 		}
-		if c.compiledRegexNoCC[k], err = regexp.Compile(`^` + v[3:]); err != nil {
-			return err
+		// 0-9
+		if int(char) >= 48 && int(char) <= 57 {
+			ns = ns + string(char)
+			continue
 		}
+		// Anything else means this is not a well formed IBAN
+		return "", false
 	}
 
-	return nil
-}
+	// We now compute mod(97) of the above transformed numeric string
+	iban := new(big.Int)
+	if _, ok := iban.SetString(ns, 10); !ok {
+		return "", false
+	}
+	ninetyseven := new(big.Int)
+	ninetyseven.SetInt64(97)
+	modulus := iban.Mod(iban, ninetyseven)
 
-// Validate checks a string and returns a country code if it is a matching IBAN.
-// If 'cleanup' is set to true the input string is cleaned for common patterns before checking, and is returned.
-func (c *Checker) Validate(s string, cleanup bool) (string, string, bool) {
-	if len(s) < 2 {
-		return "", s, false
+	if modulus.Int64() != 1 {
+		return clean, false
 	}
 
-	if cleanup {
-		s = strings.TrimSpace(s)
-		s = strings.ReplaceAll(s, ".", "")
-		s = strings.ReplaceAll(s, "-", "")
-		s = strings.ReplaceAll(s, " ", "")
-		s = strings.ReplaceAll(s, "\t", "")
-		s = strings.ToUpper(s)
-	}
+	return clean, true
 
-	// Try to match by country code
-	if regex, ok := c.compiledRegex[s[0:2]]; ok {
-		if regex.MatchString(s) {
-			return s[0:2], s, true
-		}
-	}
-
-	return "", s, false
-}
-
-// Guess checks a string (which doesn't include the country code) and returns a list of possible country codes if it is a matching IBAN.
-// If 'cleanup' is set to true the input string is cleaned for common patterns before checking, and is returned.
-func (c *Checker) Guess(s string, cleanup bool) (map[string]string, bool) {
-	if len(s) < 2 {
-		return nil, false
-	}
-
-	if cleanup {
-		s = strings.TrimSpace(s)
-		s = strings.ReplaceAll(s, ".", "")
-		s = strings.ReplaceAll(s, "-", "")
-		s = strings.ReplaceAll(s, " ", "")
-		s = strings.ReplaceAll(s, "\t", "")
-		s = strings.ToUpper(s)
-	}
-
-	// Try to guess country code
-	results := make(map[string]string)
-	for k, v := range c.compiledRegexNoCC {
-		if v.MatchString(s) {
-			results[k] = k + s
-		}
-	}
-	if len(results) > 0 {
-		return results, true
-	}
-
-	return nil, false
 }
