@@ -1,5 +1,15 @@
 # fistandards
-fistandards is an implementation of a number of banking standards.
+fistandards is an implementation of a number of banking standards in Go, for the validation and handling of various data items.
+
+For now the following is available:
+
+* IBAN numbers
+* PAN numbers
+
+Coming next:
+
+* BBAN
+* BIC
 
 Here's some example code:
 
