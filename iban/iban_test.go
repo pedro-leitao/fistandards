@@ -13,12 +13,6 @@ func TestVerify(t *testing.T) {
 		t.Errorf("Verify(GB82 WEST 1234 5698 7654 32) = %v, %v; want %v, %v", gotclean, goterror, wantclean, nil)
 	}
 
-	gotclean, goterror = c.Set("GB-62-SRLG-60837158918739")
-	wantclean = "GB62SRLG60837158918739"
-	if gotclean != wantclean || goterror != nil {
-		t.Errorf("Verify(GB-62-SRLG-60837158918739) = %v, %v; want %v, %v", gotclean, goterror, wantclean, nil)
-	}
-
 	gotclean, goterror = c.Set("GB82 WEST 1234 6698 7654 32")
 	wantclean = "GB82WEST12346698765432"
 	if gotclean != wantclean || goterror == nil {

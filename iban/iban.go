@@ -6,7 +6,8 @@ import (
 	"errors"
 	"math/big"
 	"strconv"
-	"strings"
+
+	"github.com/pedro-leitao/fistandards/utils"
 )
 
 var countryLengths = map[string]int{
@@ -21,10 +22,10 @@ var countryLengths = map[string]int{
 
 // Iban is the representation of an IBAN value
 type Iban struct {
-	iban            string
-	countryCode     string
-	ibanCheckDigits string
-	bban            string
+	Iban            string
+	CountryCode     string
+	IbanCheckDigits string
+	Bban            string
 }
 
 // Set the object to a given IBAN string, and check its validity returning a normalized
@@ -35,12 +36,7 @@ func (c *Iban) Set(s string) (string, error) {
 		return s, errors.New("Invalid length")
 	}
 
-	clean := strings.TrimSpace(s)
-	clean = strings.ReplaceAll(clean, ".", "")
-	clean = strings.ReplaceAll(clean, "-", "")
-	clean = strings.ReplaceAll(clean, " ", "")
-	clean = strings.ReplaceAll(clean, "\t", "")
-	clean = strings.ToUpper(clean)
+	clean := utils.Clean(s)
 
 	cl, ok := countryLengths[clean[0:2]]
 	// Invalid country code
@@ -83,9 +79,9 @@ func (c *Iban) Set(s string) (string, error) {
 		return clean, errors.New("Invalid modulus")
 	}
 
-	c.countryCode = clean[0:2]
-	c.ibanCheckDigits = clean[2:4]
-	c.bban = clean[4:]
+	c.CountryCode = clean[0:2]
+	c.IbanCheckDigits = clean[2:4]
+	c.Bban = clean[4:]
 
 	return clean, nil
 
