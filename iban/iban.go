@@ -4,9 +4,9 @@ package iban
 
 import (
 	"errors"
-	"math/big"
 	"strconv"
 
+	"github.com/pedro-leitao/fistandards/checksums"
 	"github.com/pedro-leitao/fistandards/utils"
 )
 
@@ -26,11 +26,13 @@ type Iban struct {
 	CountryCode     string
 	IbanCheckDigits string
 	Bban            string
+	valid           bool
 }
 
-// Set the object to a given IBAN string, and check its validity returning a normalized
-// representation and an error in case verification failed.
-func (c *Iban) Set(s string) (string, error) {
+// Validate a given IBAN string, returning a normalized
+// representation and an error in case verification failed. Once validated, the calling object
+// will have additional information regarding the IBAN.
+func (c *Iban) Validate(s string) (string, error) {
 
 	if len(s) < 2 {
 		return s, errors.New("Invalid length")
@@ -66,22 +68,15 @@ func (c *Iban) Set(s string) (string, error) {
 		return "", errors.New("Badly formed IBAN")
 	}
 
-	// We now compute mod(97) of the above transformed numeric string
-	iban := new(big.Int)
-	if _, ok := iban.SetString(ns, 10); !ok {
-		return "", errors.New("Badly formed IBAN")
-	}
-	ninetyseven := new(big.Int)
-	ninetyseven.SetInt64(97)
-	modulus := iban.Mod(iban, ninetyseven)
-
-	if modulus.Int64() != 1 {
-		return clean, errors.New("Invalid modulus")
-	}
-
+	c.Iban = clean
 	c.CountryCode = clean[0:2]
 	c.IbanCheckDigits = clean[2:4]
 	c.Bban = clean[4:]
+
+	if err := checksums.Mod97(ns); err != nil {
+		c.valid = true
+		return clean, err
+	}
 
 	return clean, nil
 
