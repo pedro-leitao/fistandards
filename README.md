@@ -10,6 +10,7 @@ Coming next:
 
 * BBAN
 * BIC
+* LEI (Legal Entity Identifier)
 
 Here's some example code:
 
