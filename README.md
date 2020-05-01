@@ -3,8 +3,8 @@ fistandards is an implementation of a number of banking standards in Go, for the
 
 For now the following is available:
 
-* IBAN numbers
-* PAN numbers
+* IBAN identifiers
+* PAN
 
 Coming next:
 
